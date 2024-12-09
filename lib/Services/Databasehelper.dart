@@ -86,7 +86,6 @@ class DatabaseHelper {
     return entryId; // Return the inserted entryId
   }
 
-  // Get all Denomination Entries along with their Denominations
   Future<List<DenominationEntry>> getAllDenominationEntries() async {
     Database db = await database;
 
@@ -96,15 +95,22 @@ class DatabaseHelper {
     List<DenominationEntry> entries = [];
 
     for (var entry in entryResult) {
-      int entryId = entry[columnEntryId] as int;
+      // Make sure that 'columnEntryId' is correctly defined and corresponds to the actual column name
+      int entryId =
+          entry[columnEntryId] as int? ?? 0; // Use default value if null
+
+      if (entryId == 0) {
+        log('Entry ID is missing for entry: $entry');
+      }
 
       // Get associated Denominations for each DenominationEntry
       var denominationResult = await db.query(
         denominationTable,
-        where: '$columnEntryIdFk = ?',
+        where:
+            '$columnEntryIdFk = ?', // Ensure that this is the correct foreign key column name
         whereArgs: [entryId],
       );
-      log(denominationResult.toString());
+      log('Denominations for entry $entryId: $denominationResult');
 
       List<Denomination> denominations = denominationResult.isNotEmpty
           ? denominationResult.map((e) => Denomination.fromMap(e)).toList()
@@ -117,12 +123,29 @@ class DatabaseHelper {
     return entries;
   }
 
-  // Update a DenominationEntry and its associated Denominations
-  Future<int> updateDenominationEntry(DenominationEntry entry) async {
+  Future<void> updateDenominationEntry(DenominationEntry entry) async {
     Database db = await database;
-    return await db.update(
-        denominationEntryTable, entry.toMapWithoutDenominations(),
-        where: '$columnEntryId = ?', whereArgs: [entry.id]);
+
+    // Start a transaction to ensure atomicity
+    await db.transaction((txn) async {
+      // Delete all existing Denominations associated with the entryId
+      await txn.delete(
+        denominationTable,
+        where: '$columnEntryIdFk = ?',
+        whereArgs: [
+          entry.denominations.first.entryId
+        ], // Use the entry's ID to delete old denominations
+      );
+
+      // Insert the updated Denominations with the same entryId
+      for (var denomination in entry.denominations) {
+        await txn.insert(
+          denominationTable,
+          denomination.toMapWithEntryId(
+              entry.denominations.first.entryId), // Reuse the same entry ID
+        );
+      }
+    });
   }
 
   // Delete a DenominationEntry and all its Denominations

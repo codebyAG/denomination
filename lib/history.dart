@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
+import 'package:denomination/edit_denomination.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:get/get.dart';
 import 'package:num_to_words/num_to_words.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -83,6 +87,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         backgroundColor: Colors.blue,
                         icon: Icons.edit,
                         onPressed: (value) {
+                          log(entry.denominations.first.entryId.toString());
+                          log(snapshot.data!.first.denominations.first.entryId
+                              .toString());
+                          Get.to(EditDenominationScreen(entryToEdit: entry));
                           // Implement edit functionality here
                         },
                       ),
@@ -92,8 +100,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           icon: Icons.delete,
                           onPressed: (value) async {
                             // Show confirmation dialog before deleting
-                            _showDeleteDialog(context,
-                                entry.denominations.first.entryId.toString());
+                            // _showDeleteDialog(context,
+                            //     entry.denominations.first.entryId.toString());
                           }),
                       SlidableAction(
                         label: 'Share',
