@@ -56,7 +56,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         centerTitle: true,
         title: Text('History'),
       ),
-      body: FutureBuilder<List<DenominationEntry>>(
+      body: new FutureBuilder<List<DenominationEntry>>(
         future: DatabaseHelper.instance.getAllDenominationEntries(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
