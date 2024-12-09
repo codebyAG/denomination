@@ -26,6 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormState>();
   final Map<int, TextEditingController> _controllers = {};
+  final Map<int, double> _totalValues = {};
 
   // Note types (2000, 500, 200, etc.)
   final List<int> _noteTypes = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
@@ -36,6 +37,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     for (int noteType in _noteTypes) {
       _controllers[noteType] = TextEditingController();
+      _totalValues[noteType] = 0.0; // Initialize total values
     }
   }
 
@@ -47,7 +49,7 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // Calculate total value
+  // Calculate the total value for each note type
   double _calculateTotalValue() {
     double totalValue = 0.0;
     _controllers.forEach((noteType, controller) {
@@ -78,6 +80,14 @@ class _HomePageState extends State<HomePage> {
       _formKey.currentState?.reset();
       setState(() {});
     }
+  }
+
+  // Calculate individual total value for each note type
+  double _calculateIndividualTotalValue(int noteType) {
+    int numberOfNotes = int.tryParse(_controllers[noteType]?.text ?? '0') ?? 0;
+    double total = noteType * numberOfNotes.toDouble();
+    _totalValues[noteType] = total;
+    return total;
   }
 
   @override
@@ -119,20 +129,45 @@ class _HomePageState extends State<HomePage> {
                             return Padding(
                               padding:
                                   const EdgeInsets.symmetric(vertical: 8.0),
-                              child: TextFormField(
-                                controller: _controllers[noteType],
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  labelText: 'Number of ${noteType} notes',
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value!.isNotEmpty &&
-                                      int.tryParse(value) == null) {
-                                    return 'Please enter a valid number';
-                                  }
-                                  return null;
-                                },
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 60,
+                                    child: Text(
+                                      '₹${noteType}',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _controllers[noteType],
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        labelText: 'Enter Number of Notes',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _calculateIndividualTotalValue(
+                                              noteType);
+                                        });
+                                      },
+                                      validator: (value) {
+                                        if (value!.isNotEmpty &&
+                                            int.tryParse(value) == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Text(
+                                    '₹${_totalValues[noteType]?.toStringAsFixed(2)}',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ],
                               ),
                             );
                           }).toList(),
