@@ -80,88 +80,113 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Slidable(
-                    startActionPane:
-                        ActionPane(motion: StretchMotion(), children: [
-                      SlidableAction(
-                        label: 'Edit',
-                        backgroundColor: Colors.blue,
-                        icon: Icons.edit,
-                        onPressed: (value) {
-                          log(entry.denominations.first.entryId.toString());
-                          log(snapshot.data!.first.denominations.first.entryId
-                              .toString());
-                          Get.to(EditDenominationScreen(entryToEdit: entry));
-                          // Implement edit functionality here
-                        },
-                      ),
-                      SlidableAction(
-                          label: 'Delete',
-                          backgroundColor: Colors.red,
-                          icon: Icons.delete,
-                          onPressed: (value) async {
-                            // Show confirmation dialog before deleting
-                            _showDeleteDialog(context,
-                                entry.denominations.first.entryId.toString());
-                          }),
-                      SlidableAction(
-                        label: 'Share',
-                        backgroundColor: Colors.green,
-                        icon: Icons.share,
-                        onPressed: (value) {
-                          // Create a string for the denominations details
-                          String denominationsDetails = '';
-                          for (var denomination in entry.denominations) {
-                            denominationsDetails +=
-                                '₹${denomination.noteType} x ${denomination.numberOfNotes} = ₹${denomination.totalValue}\n';
-                          }
+                      startActionPane:
+                          ActionPane(motion: StretchMotion(), children: [
+                        SlidableAction(
+                          label: 'Edit',
+                          backgroundColor: Colors.blue,
+                          icon: Icons.edit,
+                          onPressed: (value) {
+                            log(entry.denominations.first.entryId.toString());
+                            log(snapshot.data!.first.denominations.first.entryId
+                                .toString());
+                            Get.to(EditDenominationScreen(entryToEdit: entry));
+                            // Implement edit functionality here
+                          },
+                        ),
+                        SlidableAction(
+                            label: 'Delete',
+                            backgroundColor: Colors.red,
+                            icon: Icons.delete,
+                            onPressed: (value) async {
+                              // Show confirmation dialog before deleting
+                              _showDeleteDialog(context,
+                                  entry.denominations.first.entryId.toString());
+                            }),
+                        SlidableAction(
+                          label: 'Share',
+                          backgroundColor: Colors.green,
+                          icon: Icons.share,
+                          onPressed: (value) {
+                            // Create a string for the denominations details
+                            String denominationsDetails = '';
+                            for (var denomination in entry.denominations) {
+                              denominationsDetails +=
+                                  '₹${denomination.noteType} x ${denomination.numberOfNotes} = ₹${denomination.totalValue}\n';
+                            }
 
-                          // Calculate the Grand Total
-                          int grandTotal = entry.denominations
-                              .fold(0, (sum, item) => sum + item.totalValue);
+                            // Calculate the Grand Total
+                            int grandTotal = entry.denominations
+                                .fold(0, (sum, item) => sum + item.totalValue);
 
-                          // Convert Grand Total to Words (using a package like flutter_num_words)
-                          String totalValueInWords = grandTotal.toWords();
+                            // Convert Grand Total to Words (using a package like flutter_num_words)
+                            String totalValueInWords = grandTotal.toWords();
 
-                          // Construct the full share content with Category, Denominations, Divider, Value in Words, and Grand Total
-                          String content =
-                              '${entry.category}\n' // Display Category first
-                              'Denominations\n'
-                              '${entry.date}\n\n'
-                              '------------------------\n' // Divider
-                              'Rupees X Counts = Total\n'
-                              '$denominationsDetails' // Show Denominations
-                              '------------------------\n' // Divider
-                              'Grand Total: ₹$grandTotal\n' // Show Grand Total
-                              '$totalValueInWords'; // Show Value in Words
+                            // Construct the full share content with Category, Denominations, Divider, Value in Words, and Grand Total
+                            String content =
+                                '${entry.category}\n' // Display Category first
+                                'Denominations\n'
+                                '${entry.date}\n\n'
+                                '------------------------\n' // Divider
+                                'Rupees X Counts = Total\n'
+                                '$denominationsDetails' // Show Denominations
+                                '------------------------\n' // Divider
+                                'Grand Total: ₹$grandTotal\n' // Show Grand Total
+                                '$totalValueInWords'; // Show Value in Words
 
-                          // Share the content
-                          Share.share(content);
-                        },
-                      ),
-                    ]),
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      tileColor: Colors.white12,
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Grand Total ₹${entry.denominations.fold(0, (sum, item) => sum + item.totalValue)}',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
+                            // Share the content
+                            Share.share(content);
+                          },
+                        ),
+                      ]),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                            color: Colors.blue.shade800.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${entry.category}",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 15),
+                                  ),
+                                  Text(
+                                    "${entry.date}",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 15),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                '₹ ${entry.denominations.fold(0, (sum, item) => sum + item.totalValue)}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 28),
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                "${entry.remarks}",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 15),
+                              ),
+                            ],
                           ),
-                          Text(
-                            "${entry.date}\nRemarks: ${entry.remarks}",
-                            style: TextStyle(color: Colors.white, fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      title: Text(
-                        '${entry.category}',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
+                        ),
+                      )),
                 );
               },
             );
