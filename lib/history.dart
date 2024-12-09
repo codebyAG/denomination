@@ -100,8 +100,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           icon: Icons.delete,
                           onPressed: (value) async {
                             // Show confirmation dialog before deleting
-                            // _showDeleteDialog(context,
-                            //     entry.denominations.first.entryId.toString());
+                            _showDeleteDialog(context,
+                                entry.denominations.first.entryId.toString());
                           }),
                       SlidableAction(
                         label: 'Share',

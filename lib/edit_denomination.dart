@@ -2,6 +2,7 @@ import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
 import 'package:denomination/history.dart';
+import 'package:denomination/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:num_to_words/num_to_words.dart';
@@ -94,8 +95,8 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                 },
                 items: [
                   DropdownMenuItem(child: Text('General'), value: 'General'),
-                  DropdownMenuItem(child: Text('Festival'), value: 'Festival'),
-                  DropdownMenuItem(child: Text('Others'), value: 'Others'),
+                  DropdownMenuItem(child: Text('Income'), value: 'Income'),
+                  DropdownMenuItem(child: Text('Expense'), value: 'Expense'),
                 ],
                 decoration: InputDecoration(labelText: 'Category'),
                 validator: (value) {
@@ -134,7 +135,7 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                   DatabaseHelper.instance.updateDenominationEntry(updatedEntry);
 
                   Navigator.pop(context); // Close dialog
-                  Get.back(); // Go back to the previous screen
+                  Get.offAll(() => HomePage());
                 }
               },
               child: Text('Update'),
@@ -216,6 +217,7 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
               ),
             ],
             expandedHeight: 200.0,
+            toolbarHeight: 100,
             floating: false,
             pinned: true,
             centerTitle: false,
@@ -225,22 +227,29 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   totalValue > 0
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Total Amount',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 2),
-                            Text('₹${totalValue.toString()}',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 2),
-                            Text('${totalValueInWords} only /-',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
-                          ],
+                      ? Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Total Amount',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold)),
+                              SizedBox(height: 2),
+                              Text('₹${totalValue.toString()}',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold)),
+                              SizedBox(height: 2),
+                              Text('${totalValueInWords} only /-',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         )
                       : Text('Denomination',
                           style: TextStyle(
@@ -272,18 +281,45 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 60,
-                                    child: Text('₹${noteType}',
-                                        style: TextStyle(
-                                            fontSize: 16, color: Colors.white)),
+                                    width: 80,
+                                    child: Text(
+                                      '₹${noteType}  x',
+                                      style: TextStyle(
+                                          fontSize: 20, color: Colors.white),
+                                    ),
                                   ),
                                   SizedBox(width: 10),
-                                  Expanded(
+                                  Container(
+                                    width: 150,
                                     child: TextFormField(
                                       controller: _controllers[noteType],
+                                      textInputAction: TextInputAction.next,
                                       keyboardType: TextInputType.number,
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 20),
+                                      cursorHeight: 25,
                                       decoration: InputDecoration(
+                                        fillColor: Colors.grey.withOpacity(0.5),
+                                        filled: true,
+                                        suffix: InkWell(
+                                          onTap: () {
+                                            _controllers[noteType]!.clear();
+                                            setState(() {
+                                              _calculateIndividualTotalValue(
+                                                  noteType);
+                                            });
+                                          },
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.white),
+                                            child: Icon(
+                                              Icons.close,
+                                              color: Colors.black,
+                                              size: 15,
+                                            ),
+                                          ),
+                                        ),
                                         border: OutlineInputBorder(
                                             borderSide: BorderSide(
                                                 color: Colors.white)),
@@ -293,9 +329,7 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                                         focusedBorder: OutlineInputBorder(
                                             borderSide: BorderSide(
                                                 color: Colors.white)),
-                                        labelText: 'Enter Number of Notes',
-                                        labelStyle:
-                                            TextStyle(color: Colors.white),
+                                        hintText: "",
                                       ),
                                       onChanged: (value) {
                                         setState(() {
@@ -312,11 +346,13 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                                       },
                                     ),
                                   ),
-                                  SizedBox(width: 16),
+                                  SizedBox(width: 10),
                                   Text(
-                                    '₹${_totalValues[noteType]?.toStringAsFixed(0)}',
+                                    '= ₹${_totalValues[noteType]?.toStringAsFixed(0)}', // Display as integer
                                     style: TextStyle(
-                                        fontSize: 16, color: Colors.white),
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),

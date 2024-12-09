@@ -91,6 +91,7 @@ class DatabaseHelper {
 
     // Get all Denomination Entries
     var entryResult = await db.query(denominationEntryTable);
+    log(entryResult.toString());
 
     List<DenominationEntry> entries = [];
 
@@ -128,6 +129,19 @@ class DatabaseHelper {
 
     // Start a transaction to ensure atomicity
     await db.transaction((txn) async {
+      await txn.update(
+        denominationEntryTable,
+        {
+          'date': entry.date,
+          'remarks': entry.remarks,
+          'category': entry.category
+        }, // Convert entry without denominations
+        where: '$columnEntryId = ?',
+        whereArgs: [
+          entry.denominations.first.entryId
+        ], // Use the entry ID to update the entry
+      );
+
       // Delete all existing Denominations associated with the entryId
       await txn.delete(
         denominationTable,

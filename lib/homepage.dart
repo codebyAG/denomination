@@ -26,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
     for (int noteType in _noteTypes) {
       _controllers[noteType] = TextEditingController();
       _totalValues[noteType] = 0; // Initialize total values as integers
@@ -77,8 +78,8 @@ class _HomePageState extends State<HomePage> {
                 },
                 items: [
                   DropdownMenuItem(child: Text('General'), value: 'General'),
-                  DropdownMenuItem(child: Text('Festival'), value: 'Festival'),
-                  DropdownMenuItem(child: Text('Others'), value: 'Others'),
+                  DropdownMenuItem(child: Text('Income'), value: 'Income'),
+                  DropdownMenuItem(child: Text('Expense'), value: 'Expense'),
                 ],
                 decoration: InputDecoration(labelText: 'Category'),
                 validator: (value) {
@@ -103,7 +104,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 if (selectedCategory.isNotEmpty &&
                     remarksController.text.isNotEmpty) {
                   // If both category and remarks are filled, save the data
@@ -116,7 +117,9 @@ class _HomePageState extends State<HomePage> {
                   );
 
                   // Save the data to the database
-                  DatabaseHelper.instance.insertDenominationEntry(newEntry);
+                  await DatabaseHelper.instance
+                      .insertDenominationEntry(newEntry);
+                  _clearFields();
 
                   // Close the dialog
                   Navigator.pop(context);
@@ -220,7 +223,7 @@ class _HomePageState extends State<HomePage> {
                 icon: Icon(Icons.more_vert_rounded),
               ),
             ],
-
+            toolbarHeight: 100,
             expandedHeight: 200.0, // Height when expanded
             floating: false,
             pinned: true, // Keeps the app bar visible when collapsed
@@ -231,32 +234,36 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   totalValue > 0
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Total Amount',
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(
-                              height: 2,
-                            ),
-                            Text(
-                              '₹${totalValue.toString()}',
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(
-                              height: 2,
-                            ),
-                            Text(
-                              '${totalValueInWords} only /-',
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                      ? Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Total Amount',
+                                style: TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(
+                                height: 2,
+                              ),
+                              Text(
+                                '₹${totalValue.toString()}',
+                                style: TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(
+                                height: 2,
+                              ),
+                              Text(
+                                '${totalValueInWords} only /-',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         )
                       : Text(
                           'Denomination', // Static title when total value is 0
@@ -290,32 +297,56 @@ class _HomePageState extends State<HomePage> {
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 60,
+                                    width: 80,
                                     child: Text(
-                                      '₹${noteType}',
+                                      '₹${noteType}  x',
                                       style: TextStyle(
-                                          fontSize: 16, color: Colors.white),
+                                          fontSize: 20, color: Colors.white),
                                     ),
                                   ),
                                   SizedBox(width: 10),
-                                  Expanded(
+                                  Container(
+                                    width: 150,
                                     child: TextFormField(
                                       controller: _controllers[noteType],
+                                      textInputAction: TextInputAction.next,
                                       keyboardType: TextInputType.number,
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 20),
+                                      cursorHeight: 25,
                                       decoration: InputDecoration(
-                                          border: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors.white)),
-                                          enabledBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors.white)),
-                                          focusedBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors.white)),
-                                          labelText: 'Enter Number of Notes',
-                                          labelStyle:
-                                              TextStyle(color: Colors.white)),
+                                        suffix: InkWell(
+                                          onTap: () {
+                                            _controllers[noteType]!.clear();
+                                            setState(() {
+                                              _calculateIndividualTotalValue(
+                                                  noteType);
+                                            });
+                                          },
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.white),
+                                            child: Icon(
+                                              Icons.close,
+                                              color: Colors.black,
+                                              size: 15,
+                                            ),
+                                          ),
+                                        ),
+                                        fillColor: Colors.grey.withOpacity(0.5),
+                                        filled: true,
+                                        border: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.white)),
+                                        enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.white)),
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.white)),
+                                        hintText: "",
+                                      ),
                                       onChanged: (value) {
                                         setState(() {
                                           _calculateIndividualTotalValue(
@@ -331,11 +362,13 @@ class _HomePageState extends State<HomePage> {
                                       },
                                     ),
                                   ),
-                                  SizedBox(width: 16),
+                                  SizedBox(width: 10),
                                   Text(
-                                    '₹${_totalValues[noteType]?.toStringAsFixed(0)}', // Display as integer
+                                    '= ₹${_totalValues[noteType]?.toStringAsFixed(0)}', // Display as integer
                                     style: TextStyle(
-                                        fontSize: 16, color: Colors.white),
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
