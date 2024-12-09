@@ -43,20 +43,18 @@ class HistoryScreen extends StatelessWidget {
                       label: 'Edit',
                       backgroundColor: Colors.blue,
                       icon: Icons.edit,
-                      onPressed: (value) {},
-                    ),
-                    SlidableAction(
-                      label: 'Delete',
-                      backgroundColor: Colors.red,
-                      icon: Icons.delete,
-                      onPressed: (value) async {
-                        // Implement delete functionality
-                        await DatabaseHelper.instance
-                            .deleteDenominationEntry(entry.id!);
-                        print('Deleted entry ${entry.id}');
-                        // You can refresh the screen by using setState or Navigator.pop to go back to previous screen
+                      onPressed: (value) {
+                        // Implement edit functionality here
                       },
                     ),
+                    SlidableAction(
+                        label: 'Delete',
+                        backgroundColor: Colors.red,
+                        icon: Icons.delete,
+                        onPressed: (value) async {
+                          // Show confirmation dialog before deleting
+                          _showDeleteDialog(context, entry.id!);
+                        }),
                     SlidableAction(
                       label: 'Share',
                       backgroundColor: Colors.green,
@@ -111,4 +109,32 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Future _showDeleteDialog(BuildContext context, int entryId) async {
+  return showDialog<bool>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Are you sure you want to delete this entry?'),
+        content: Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // User pressed No
+            },
+            child: Text('No'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // User pressed Yes, delete the entry by its ID
+              await DatabaseHelper.instance.deleteDenominationEntry(entryId);
+              Navigator.of(context).pop(); // Close dialog after confirming
+            },
+            child: Text('Yes'),
+          ),
+        ],
+      );
+    },
+  );
 }
