@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
@@ -71,6 +73,7 @@ class _HomePageState extends State<HomePage> {
     List<Denomination> denominations = _noteTypes.map((noteType) {
       int numberOfNotes =
           int.tryParse(_controllers[noteType]?.text ?? '0') ?? 0;
+      log(_controllers[noteType]!.text.toString());
       return Denomination(
         noteType: noteType,
         numberOfNotes: numberOfNotes,
