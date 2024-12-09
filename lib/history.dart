@@ -80,7 +80,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Slidable(
-                    endActionPane:
+                    startActionPane:
                         ActionPane(motion: StretchMotion(), children: [
                       SlidableAction(
                         label: 'Edit',
@@ -124,12 +124,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
                           // Construct the full share content with Category, Denominations, Divider, Value in Words, and Grand Total
                           String content =
-                              'Category: ${entry.category}\n\n' // Display Category first
-                              'Denominations Details:\n'
+                              '${entry.category}\n' // Display Category first
+                              'Denominations\n'
+                              '${entry.date}\n\n'
+                              '------------------------\n' // Divider
+                              'Rupees X Counts = Total\n'
                               '$denominationsDetails' // Show Denominations
                               '------------------------\n' // Divider
-                              'Value in Words: $totalValueInWords\n' // Show Value in Words
-                              'Grand Total: ₹$grandTotal'; // Show Grand Total
+                              'Grand Total: ₹$grandTotal\n' // Show Grand Total
+                              '$totalValueInWords'; // Show Value in Words
 
                           // Share the content
                           Share.share(content);
