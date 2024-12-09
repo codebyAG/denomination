@@ -1,4 +1,3 @@
-
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
@@ -155,6 +154,9 @@ class _HomePageState extends State<HomePage> {
     _controllers.forEach((key, value) {
       value.clear(); // Clear the note type text fields
     });
+    for (int noteType in _noteTypes) {
+      _totalValues[noteType] = 0; // Initialize total values as integers
+    }
     setState(() {}); // Trigger a rebuild to update the UI
   }
 

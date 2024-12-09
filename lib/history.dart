@@ -5,7 +5,43 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:num_to_words/num_to_words.dart';
 import 'package:share_plus/share_plus.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  Future _showDeleteDialog(BuildContext context, String entryId) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Are you sure you want to delete this entry?'),
+          content: Text('This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // User pressed No
+              },
+              child: Text('No'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // User pressed Yes, delete the entry by its ID
+                await DatabaseHelper.instance
+                    .deleteDenominationEntry(int.parse(entryId.toString()));
+
+                Navigator.of(context).pop(); // Close dialog after confirming
+                setState(() {});
+              },
+              child: Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,7 +89,8 @@ class HistoryScreen extends StatelessWidget {
                         icon: Icons.delete,
                         onPressed: (value) async {
                           // Show confirmation dialog before deleting
-                          _showDeleteDialog(context, entry.id.toString());
+                          _showDeleteDialog(context,
+                              entry.denominations.first.entryId.toString());
                         }),
                     SlidableAction(
                       label: 'Share',
@@ -109,33 +146,4 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-Future _showDeleteDialog(BuildContext context, String entryId) async {
-  return showDialog<bool>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Are you sure you want to delete this entry?'),
-        content: Text('This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // User pressed No
-            },
-            child: Text('No'),
-          ),
-          TextButton(
-            onPressed: () async {
-              // User pressed Yes, delete the entry by its ID
-              await DatabaseHelper.instance
-                  .deleteDenominationEntry(int.parse(entryId.toString()));
-              Navigator.of(context).pop(); // Close dialog after confirming
-            },
-            child: Text('Yes'),
-          ),
-        ],
-      );
-    },
-  );
 }
