@@ -53,7 +53,7 @@ class HistoryScreen extends StatelessWidget {
                         icon: Icons.delete,
                         onPressed: (value) async {
                           // Show confirmation dialog before deleting
-                          _showDeleteDialog(context, entry.id!);
+                          _showDeleteDialog(context, entry.id.toString());
                         }),
                     SlidableAction(
                       label: 'Share',
@@ -111,7 +111,7 @@ class HistoryScreen extends StatelessWidget {
   }
 }
 
-Future _showDeleteDialog(BuildContext context, int entryId) async {
+Future _showDeleteDialog(BuildContext context, String entryId) async {
   return showDialog<bool>(
     context: context,
     builder: (BuildContext context) {
@@ -128,7 +128,8 @@ Future _showDeleteDialog(BuildContext context, int entryId) async {
           TextButton(
             onPressed: () async {
               // User pressed Yes, delete the entry by its ID
-              await DatabaseHelper.instance.deleteDenominationEntry(entryId);
+              await DatabaseHelper.instance
+                  .deleteDenominationEntry(int.parse(entryId.toString()));
               Navigator.of(context).pop(); // Close dialog after confirming
             },
             child: Text('Yes'),

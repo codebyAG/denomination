@@ -88,18 +88,15 @@ class DatabaseHelper {
 
   // Get all Denomination Entries along with their Denominations
   Future<List<DenominationEntry>> getAllDenominationEntries() async {
-    log("Fetching all entries...");
     Database db = await database;
 
     // Get all Denomination Entries
     var entryResult = await db.query(denominationEntryTable);
-    log(entryResult.toString());
 
     List<DenominationEntry> entries = [];
 
     for (var entry in entryResult) {
       int entryId = entry[columnEntryId] as int;
-      log('Fetching denominations for entryId: $entryId');
 
       // Get associated Denominations for each DenominationEntry
       var denominationResult = await db.query(
