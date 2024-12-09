@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
+import 'package:denomination/history.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart'; // For formatting date
@@ -94,6 +95,16 @@ class _HomePageState extends State<HomePage> {
         .insertDenominationEntry(newEntry); // Insert into the database
   }
 
+  void _clearFields() {
+    _formKey.currentState?.reset(); // Resets the form
+    _remarksController.clear(); // Clear remarks field
+    _categoryController.clear(); // Clear category field
+    _controllers.forEach((key, value) {
+      value.clear(); // Clear the note type text fields
+    });
+    setState(() {}); // Trigger a rebuild to update the UI
+  }
+
   // Calculate individual total value for each note type
   int _calculateIndividualTotalValue(int noteType) {
     int numberOfNotes = int.tryParse(_controllers[noteType]?.text ?? '0') ?? 0;
@@ -105,13 +116,44 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            actions: [
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'history') {
+                    Get.to(
+                        HistoryScreen()); // Navigate to HistoryScreen when History is selected
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    PopupMenuItem<String>(
+                      value: 'history',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.history,
+                            color: Colors.black,
+                          ),
+                          SizedBox(width: 8),
+                          Text('History'),
+                        ],
+                      ),
+                    ),
+                  ];
+                },
+                icon: Icon(Icons.more_vert_rounded),
+              ),
+            ],
+
             expandedHeight: 200.0, // Height when expanded
             floating: false,
             pinned: true, // Keeps the app bar visible when collapsed
             centerTitle: false,
+            backgroundColor: Colors.blue.shade900,
             flexibleSpace: FlexibleSpaceBar(
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -147,7 +189,8 @@ class _HomePageState extends State<HomePage> {
                                     width: 60,
                                     child: Text(
                                       '₹${noteType}',
-                                      style: TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.white),
                                     ),
                                   ),
                                   SizedBox(width: 10),
@@ -156,9 +199,18 @@ class _HomePageState extends State<HomePage> {
                                       controller: _controllers[noteType],
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
-                                        labelText: 'Enter Number of Notes',
-                                        border: OutlineInputBorder(),
-                                      ),
+                                          border: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.white)),
+                                          enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.white)),
+                                          focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.white)),
+                                          labelText: 'Enter Number of Notes',
+                                          labelStyle:
+                                              TextStyle(color: Colors.white)),
                                       onChanged: (value) {
                                         setState(() {
                                           _calculateIndividualTotalValue(
@@ -177,7 +229,8 @@ class _HomePageState extends State<HomePage> {
                                   SizedBox(width: 16),
                                   Text(
                                     '₹${_totalValues[noteType]?.toStringAsFixed(0)}', // Display as integer
-                                    style: TextStyle(fontSize: 16),
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.white),
                                   ),
                                 ],
                               ),
@@ -203,42 +256,6 @@ class _HomePageState extends State<HomePage> {
                           border: OutlineInputBorder(),
                         ),
                       ),
-                      SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _addDenominationEntry,
-                        child: Text('Submit Denomination Entry'),
-                      ),
-                      SizedBox(height: 30),
-                      // Display Denomination Entries from the database
-                      FutureBuilder<List<DenominationEntry>>(
-                        future:
-                            DatabaseHelper.instance.getAllDenominationEntries(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}'));
-                          } else if (!snapshot.hasData ||
-                              snapshot.data!.isEmpty) {
-                            return Center(
-                                child:
-                                    Text('No denomination entries available.'));
-                          } else {
-                            return Column(
-                              children: snapshot.data!
-                                  .map((entry) => ListTile(
-                                        title: Text(
-                                            'Total Value: ₹${entry.denominations.fold(0, (sum, item) => sum + item.totalValue)}'),
-                                        subtitle: Text(
-                                            'Category: ${entry.category}\nDate: ${entry.date}\nRemarks: ${entry.remarks}'),
-                                      ))
-                                  .toList(),
-                            );
-                          }
-                        },
-                      ),
                     ],
                   ),
                 ),
@@ -246,6 +263,44 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: PopupMenuButton<String>(
+        onSelected: (value) {
+          if (value == 'save') {
+            _addDenominationEntry(); // Save action
+          } else if (value == 'clear') {
+            _clearFields(); // Clear action
+          }
+        },
+        itemBuilder: (BuildContext context) {
+          return [
+            PopupMenuItem<String>(
+              value: 'save',
+              child: Row(
+                children: [
+                  Icon(Icons.save),
+                  SizedBox(width: 8),
+                  Text('Save'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'clear',
+              child: Row(
+                children: [
+                  Icon(Icons.clear),
+                  SizedBox(width: 8),
+                  Text('Clear'),
+                ],
+              ),
+            ),
+          ];
+        },
+        child: FloatingActionButton(
+          onPressed: null, // No action needed when FAB itself is pressed
+          tooltip: 'Actions',
+          child: Icon(Icons.touch_app_rounded),
+        ),
       ),
     );
   }
