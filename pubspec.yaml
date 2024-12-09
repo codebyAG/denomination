@@ -39,6 +39,7 @@ dependencies:
   change_app_package_name: ^1.4.0
   get: ^4.6.6
   intl: ^0.19.0
+  num_to_words: ^1.1.0
 
 dev_dependencies:
 

@@ -4,7 +4,8 @@ import 'package:denomination/Services/Databasehelper.dart';
 import 'package:denomination/history.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart'; // For formatting date
+import 'package:intl/intl.dart';
+import 'package:num_to_words/num_to_words.dart'; // For formatting date
 
 void main() => runApp(MyApp());
 
@@ -179,6 +180,23 @@ class _HomePageState extends State<HomePage> {
     return total;
   }
 
+  // Calculate Total Price and Total Value
+  int get totalValue {
+    int totalValue = 0;
+    _controllers.forEach((noteType, controller) {
+      if (controller.text.isNotEmpty) {
+        int numberOfNotes = int.tryParse(controller.text) ?? 0;
+        totalValue += numberOfNotes * noteType;
+      }
+    });
+    return totalValue;
+  }
+
+// Convert total value to words
+  String get totalValueInWords {
+    return totalValue.toWords(); // Convert totalValue to words
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,7 +242,39 @@ class _HomePageState extends State<HomePage> {
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text('Denomination'),
+                  totalValue > 0
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Total Amount',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                              height: 2,
+                            ),
+                            Text(
+                              '₹${totalValue.toString()}',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                              height: 2,
+                            ),
+                            Text(
+                              '${totalValueInWords} only /-',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          'Denomination', // Static title when total value is 0
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                 ],
               ),
               titlePadding: EdgeInsets.all(10),
