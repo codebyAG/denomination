@@ -1,7 +1,9 @@
-import 'package:denomination/Models/dinomation_model.dart';
+import 'package:denomination/Models/dinomation_entry_model.dart';
+import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart'; // For formatting date
 
 void main() => runApp(MyApp());
 
@@ -26,7 +28,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormState>();
   final Map<int, TextEditingController> _controllers = {};
-  final Map<int, double> _totalValues = {};
+  final Map<int, int> _totalValues = {}; // Change to int for totalValue
+  final TextEditingController _remarksController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
 
   // Note types (2000, 500, 200, etc.)
   final List<int> _noteTypes = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
@@ -37,7 +41,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     for (int noteType in _noteTypes) {
       _controllers[noteType] = TextEditingController();
-      _totalValues[noteType] = 0.0; // Initialize total values
+      _totalValues[noteType] = 0; // Initialize total values as integers
     }
   }
 
@@ -46,12 +50,14 @@ class _HomePageState extends State<HomePage> {
     _controllers.forEach((key, value) {
       value.dispose();
     });
+    _remarksController.dispose();
+    _categoryController.dispose();
     super.dispose();
   }
 
   // Calculate the total value for each note type
-  double _calculateTotalValue() {
-    double totalValue = 0.0;
+  int _calculateTotalValue() {
+    int totalValue = 0;
     _controllers.forEach((noteType, controller) {
       if (controller.text.isNotEmpty) {
         int numberOfNotes = int.tryParse(controller.text) ?? 0;
@@ -61,31 +67,34 @@ class _HomePageState extends State<HomePage> {
     return totalValue;
   }
 
-  // Add the denomination to the database
-  Future<void> _addDenomination() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      double totalValue = _calculateTotalValue();
-
-      // Insert into the database
-      Denomination newDenomination = Denomination(
-        noteType: 0, // This is not necessary but included for simplicity
-        numberOfNotes: 0, // This is not necessary but included for simplicity
-        totalValue: totalValue,
+  Future<void> _addDenominationEntry() async {
+    List<Denomination> denominations = _noteTypes.map((noteType) {
+      int numberOfNotes =
+          int.tryParse(_controllers[noteType]?.text ?? '0') ?? 0;
+      return Denomination(
+        noteType: noteType,
+        numberOfNotes: numberOfNotes,
+        totalValue: noteType * numberOfNotes, // totalValue as integer
+        entryId: 0, // entryId will be assigned after insertion
       );
+    }).toList();
 
-      // Save to database
-      await DatabaseHelper.instance.insertDenomination(newDenomination);
+    DenominationEntry newEntry = DenominationEntry(
+      date: DateFormat("d MMMM, yyyy, h:mm a")
+          .format(DateTime.now()), // Current date
+      remarks: _remarksController.text,
+      category: _categoryController.text,
+      denominations: denominations,
+    );
 
-      // Reset form after submission
-      _formKey.currentState?.reset();
-      setState(() {});
-    }
+    await DatabaseHelper.instance
+        .insertDenominationEntry(newEntry); // Insert into the database
   }
 
   // Calculate individual total value for each note type
-  double _calculateIndividualTotalValue(int noteType) {
+  int _calculateIndividualTotalValue(int noteType) {
     int numberOfNotes = int.tryParse(_controllers[noteType]?.text ?? '0') ?? 0;
-    double total = noteType * numberOfNotes.toDouble();
+    int total = noteType * numberOfNotes;
     _totalValues[noteType] = total;
     return total;
   }
@@ -164,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   SizedBox(width: 16),
                                   Text(
-                                    '₹${_totalValues[noteType]?.toStringAsFixed(2)}',
+                                    '₹${_totalValues[noteType]?.toStringAsFixed(0)}', // Display as integer
                                     style: TextStyle(fontSize: 16),
                                   ),
                                 ],
@@ -174,13 +183,33 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       SizedBox(height: 20),
+                      // Remarks Field
+                      TextFormField(
+                        controller: _remarksController,
+                        decoration: InputDecoration(
+                          labelText: 'Remarks (Optional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      // Category Field
+                      TextFormField(
+                        controller: _categoryController,
+                        decoration: InputDecoration(
+                          labelText: 'Category (Optional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: _addDenomination,
-                        child: Text('Submit Denomination'),
+                        onPressed: _addDenominationEntry,
+                        child: Text('Submit Denomination Entry'),
                       ),
                       SizedBox(height: 30),
-                      FutureBuilder<List<Denomination>>(
-                        future: DatabaseHelper.instance.getAllDenominations(),
+                      // Display Denomination Entries from the database
+                      FutureBuilder<List<DenominationEntry>>(
+                        future:
+                            DatabaseHelper.instance.getAllDenominationEntries(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -191,15 +220,16 @@ class _HomePageState extends State<HomePage> {
                           } else if (!snapshot.hasData ||
                               snapshot.data!.isEmpty) {
                             return Center(
-                                child: Text('No denominations available.'));
+                                child:
+                                    Text('No denomination entries available.'));
                           } else {
                             return Column(
                               children: snapshot.data!
-                                  .map((denomination) => ListTile(
+                                  .map((entry) => ListTile(
                                         title: Text(
-                                            'Total Value: ₹${denomination.totalValue}'),
+                                            'Total Value: ₹${entry.denominations.fold(0, (sum, item) => sum + item.totalValue)}'),
                                         subtitle: Text(
-                                            'Details: ${denomination.totalValue}'),
+                                            'Category: ${entry.category}\nDate: ${entry.date}\nRemarks: ${entry.remarks}'),
                                       ))
                                   .toList(),
                             );

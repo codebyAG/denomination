@@ -1,4 +1,6 @@
-import 'package:denomination/Models/dinomation_model.dart';
+import 'dart:developer';
+import 'package:denomination/Models/dinomation_entry_model.dart';
+import 'package:denomination/Models/dinomination_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -6,64 +8,146 @@ class DatabaseHelper {
   static const _databaseName = 'mydinomination.db'; // Database name
   static const _databaseVersion = 1;
 
-  static const table = 'denominations';
-  static const columnId = 'id';
+  // Table for storing Denomination Entries
+  static const denominationEntryTable = 'denomination_entries';
+  static const columnEntryId = 'entryId'; // Primary key for DenominationEntry
+  static const columnDate = 'date';
+  static const columnRemarks = 'remarks';
+  static const columnCategory = 'category';
+
+  // Table for storing Denominations (linked to DenominationEntry)
+  static const denominationTable = 'denominations';
   static const columnNoteType = 'noteType';
   static const columnNumberOfNotes = 'numberOfNotes';
   static const columnTotalValue = 'totalValue';
+  static const columnEntryIdFk = 'entryId'; // Foreign key to DenominationEntry
 
   // Singleton pattern
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
   static Database? _database;
 
+  // Getter for the database instance
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
   }
 
-  // Open the database and create the table if it doesn't exist
+  // Open the database and create tables if they don't exist
   Future<Database> _initDatabase() async {
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, _databaseName);
-    return openDatabase(path, version: _databaseVersion, onCreate: (db, version) async {
+
+    return openDatabase(path, version: _databaseVersion,
+        onCreate: (db, version) async {
+      // Create the DenominationEntry table
       await db.execute('''
-        CREATE TABLE $table (
-          $columnId INTEGER PRIMARY KEY,
-          $columnNoteType INTEGER NOT NULL,
-          $columnNumberOfNotes INTEGER NOT NULL,
-          $columnTotalValue REAL NOT NULL
+        CREATE TABLE $denominationEntryTable (
+          $columnEntryId INTEGER PRIMARY KEY,
+          $columnDate TEXT,
+          $columnRemarks TEXT,
+          $columnCategory TEXT
+        )
+      ''');
+
+      // Create the Denominations table
+      await db.execute('''
+        CREATE TABLE $denominationTable (
+          id INTEGER PRIMARY KEY,
+          $columnNoteType INTEGER,
+          $columnNumberOfNotes INTEGER,
+          $columnTotalValue INTEGER,
+          $columnEntryIdFk INTEGER,
+          FOREIGN KEY($columnEntryIdFk) REFERENCES $denominationEntryTable($columnEntryId)
         )
       ''');
     });
   }
 
-  // Insert a Denomination into the database
-  Future<int> insertDenomination(Denomination denomination) async {
+  // Insert a DenominationEntry and its Denominations
+  Future<int> insertDenominationEntry(DenominationEntry entry) async {
     Database db = await database;
-    return await db.insert(table, denomination.toMap());
+
+    // Insert DenominationEntry
+    int entryId = await db.insert(denominationEntryTable, {
+      columnDate: entry.date,
+      columnRemarks: entry.remarks,
+      columnCategory: entry.category,
+    });
+
+    // Insert each Denomination, linking them to the entryId
+    for (var denomination in entry.denominations) {
+      denomination.entryId = entryId; // Set the entryId for the denomination
+      await db.insert(
+          denominationTable, denomination.toMapWithEntryId(entryId));
+    }
+
+    return entryId; // Return the inserted entryId
   }
 
-  // Get all denominations from the database
-  Future<List<Denomination>> getAllDenominations() async {
+  // Get all Denomination Entries along with their Denominations
+  Future<List<DenominationEntry>> getAllDenominationEntries() async {
+    log("Fetching all entries...");
     Database db = await database;
-    var result = await db.query(table);
-    return result.isNotEmpty
-        ? result.map((e) => Denomination.fromMap(e)).toList()
-        : [];
+
+    // Get all Denomination Entries
+    var entryResult = await db.query(denominationEntryTable);
+    log(entryResult.toString());
+
+    List<DenominationEntry> entries = [];
+
+    for (var entry in entryResult) {
+      int entryId = entry[columnEntryId] as int;
+      log('Fetching denominations for entryId: $entryId');
+
+      // Get associated Denominations for each DenominationEntry
+      var denominationResult = await db.query(
+        denominationTable,
+        where: '$columnEntryIdFk = ?',
+        whereArgs: [entryId],
+      );
+      log(denominationResult.toString());
+
+      List<Denomination> denominations = denominationResult.isNotEmpty
+          ? denominationResult.map((e) => Denomination.fromMap(e)).toList()
+          : [];
+
+      entries.add(
+          DenominationEntry.fromMapWithDenominations(entry, denominations));
+    }
+
+    return entries;
   }
 
-  // Update a Denomination
-  Future<int> updateDenomination(Denomination denomination) async {
+  // Update a DenominationEntry and its associated Denominations
+  Future<int> updateDenominationEntry(DenominationEntry entry) async {
     Database db = await database;
-    return await db.update(table, denomination.toMap(),
-        where: '$columnId = ?', whereArgs: [denomination.id]);
+    return await db.update(
+        denominationEntryTable, entry.toMapWithoutDenominations(),
+        where: '$columnEntryId = ?', whereArgs: [entry.id]);
   }
 
-  // Delete a Denomination
-  Future<int> deleteDenomination(int id) async {
+  // Delete a DenominationEntry and all its Denominations
+  Future<int> deleteDenominationEntry(int entryId) async {
     Database db = await database;
-    return await db.delete(table, where: '$columnId = ?', whereArgs: [id]);
+
+    // Delete associated Denominations first
+    await db.delete(denominationTable,
+        where: '$columnEntryIdFk = ?', whereArgs: [entryId]);
+
+    // Then delete the DenominationEntry itself
+    return await db.delete(denominationEntryTable,
+        where: '$columnEntryId = ?', whereArgs: [entryId]);
+  }
+
+  // Delete all data from the tables
+  Future<int> deleteAllData() async {
+    Database db = await database;
+
+    // Delete all data from both tables
+    await db.delete(denominationTable); // Deleting Denominations first
+    return await db
+        .delete(denominationEntryTable); // Then deleting DenominationEntries
   }
 }
