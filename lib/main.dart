@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
@@ -70,11 +68,87 @@ class _HomePageState extends State<HomePage> {
     return totalValue;
   }
 
+  // Show dialog for category and remarks before saving
+  void _showCategoryRemarksDialog(List<Denomination> denominations) {
+    String selectedCategory = 'General'; // Default category
+    TextEditingController remarksController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter Category and Remarks'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Category Dropdown
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                onChanged: (value) {
+                  setState(() {
+                    selectedCategory = value!;
+                  });
+                },
+                items: [
+                  DropdownMenuItem(child: Text('General'), value: 'General'),
+                  DropdownMenuItem(child: Text('Festival'), value: 'Festival'),
+                  DropdownMenuItem(child: Text('Others'), value: 'Others'),
+                ],
+                decoration: InputDecoration(labelText: 'Category'),
+                validator: (value) {
+                  if (value == null) {
+                    return 'Please select a category';
+                  }
+                  return null;
+                },
+              ),
+              // Remarks Text Field
+              TextFormField(
+                controller: remarksController,
+                decoration: InputDecoration(labelText: 'Remarks'),
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter remarks';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (selectedCategory.isNotEmpty &&
+                    remarksController.text.isNotEmpty) {
+                  // If both category and remarks are filled, save the data
+                  DenominationEntry newEntry = DenominationEntry(
+                    date: DateFormat("d MMMM, yyyy, h:mm a")
+                        .format(DateTime.now()), // Current date
+                    remarks: remarksController.text,
+                    category: selectedCategory,
+                    denominations: denominations,
+                  );
+
+                  // Save the data to the database
+                  DatabaseHelper.instance.insertDenominationEntry(newEntry);
+
+                  // Close the dialog
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Add Denomination Entry and show dialog to enter category and remarks
   Future<void> _addDenominationEntry() async {
     List<Denomination> denominations = _noteTypes.map((noteType) {
       int numberOfNotes =
           int.tryParse(_controllers[noteType]?.text ?? '0') ?? 0;
-      log(_controllers[noteType]!.text.toString());
       return Denomination(
         noteType: noteType,
         numberOfNotes: numberOfNotes,
@@ -83,16 +157,8 @@ class _HomePageState extends State<HomePage> {
       );
     }).toList();
 
-    DenominationEntry newEntry = DenominationEntry(
-      date: DateFormat("d MMMM, yyyy, h:mm a")
-          .format(DateTime.now()), // Current date
-      remarks: _remarksController.text,
-      category: _categoryController.text,
-      denominations: denominations,
-    );
-
-    await DatabaseHelper.instance
-        .insertDenominationEntry(newEntry); // Insert into the database
+    // Show dialog for category and remarks after collecting all denominations
+    _showCategoryRemarksDialog(denominations);
   }
 
   void _clearFields() {
@@ -198,6 +264,7 @@ class _HomePageState extends State<HomePage> {
                                     child: TextFormField(
                                       controller: _controllers[noteType],
                                       keyboardType: TextInputType.number,
+                                      style: TextStyle(color: Colors.white),
                                       decoration: InputDecoration(
                                           border: OutlineInputBorder(
                                               borderSide: BorderSide(
@@ -236,24 +303,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             );
                           }).toList(),
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      // Remarks Field
-                      TextFormField(
-                        controller: _remarksController,
-                        decoration: InputDecoration(
-                          labelText: 'Remarks (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      // Category Field
-                      TextFormField(
-                        controller: _categoryController,
-                        decoration: InputDecoration(
-                          labelText: 'Category (Optional)',
-                          border: OutlineInputBorder(),
                         ),
                       ),
                     ],
