@@ -21,11 +21,13 @@ class _HomePageState extends State<HomePage> {
 
   // Note types (2000, 500, 200, etc.)
   final List<int> _noteTypes = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+  List<FocusNode> _focusNodes = [];
 
   // Initialize text controllers for each note type
   @override
   void initState() {
     super.initState();
+    _focusNodes = List.generate(_noteTypes.length, (_) => FocusNode());
 
     for (int noteType in _noteTypes) {
       _controllers[noteType] = TextEditingController();
@@ -64,12 +66,16 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Enter Category and Remarks'),
+          backgroundColor: Colors.blue.shade900,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          title: Text(""),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Category Dropdown
               DropdownButtonFormField<String>(
+                dropdownColor: Colors.blue.shade800,
                 value: selectedCategory,
                 onChanged: (value) {
                   setState(() {
@@ -77,11 +83,35 @@ class _HomePageState extends State<HomePage> {
                   });
                 },
                 items: [
-                  DropdownMenuItem(child: Text('General'), value: 'General'),
-                  DropdownMenuItem(child: Text('Income'), value: 'Income'),
-                  DropdownMenuItem(child: Text('Expense'), value: 'Expense'),
+                  DropdownMenuItem(
+                      child: Text(
+                        'General',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      value: 'General'),
+                  DropdownMenuItem(
+                      child: Text(
+                        'Income',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      value: 'Income'),
+                  DropdownMenuItem(
+                      child: Text(
+                        'Expense',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      value: 'Expense'),
                 ],
-                decoration: InputDecoration(labelText: 'Category'),
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  labelStyle: TextStyle(color: Colors.white),
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white)),
+                ),
                 validator: (value) {
                   if (value == null) {
                     return 'Please select a category';
@@ -90,9 +120,22 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               // Remarks Text Field
+              SizedBox(
+                height: 20,
+              ),
               TextFormField(
                 controller: remarksController,
-                decoration: InputDecoration(labelText: 'Remarks'),
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Remarks',
+                  labelStyle: TextStyle(color: Colors.white),
+                  border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white)),
+                ),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter remarks';
@@ -125,7 +168,10 @@ class _HomePageState extends State<HomePage> {
                   Navigator.pop(context);
                 }
               },
-              child: Text('Save'),
+              child: Text(
+                'Save',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -291,6 +337,7 @@ class _HomePageState extends State<HomePage> {
                         key: _formKey,
                         child: Column(
                           children: _noteTypes.map((noteType) {
+                            int index = _noteTypes.indexOf(noteType);
                             return Padding(
                               padding:
                                   const EdgeInsets.symmetric(vertical: 8.0),
@@ -308,8 +355,20 @@ class _HomePageState extends State<HomePage> {
                                   Container(
                                     width: 150,
                                     child: TextFormField(
+                                      focusNode: _focusNodes[index],
+                                      textInputAction:
+                                          index < _focusNodes.length - 1
+                                              ? TextInputAction.next
+                                              : TextInputAction.done,
+                                      onFieldSubmitted: (_) {
+                                        if (index < _focusNodes.length - 1) {
+                                          FocusScope.of(context).requestFocus(
+                                              _focusNodes[index + 1]);
+                                        } else {
+                                          FocusScope.of(context).unfocus();
+                                        }
+                                      },
                                       controller: _controllers[noteType],
-                                      textInputAction: TextInputAction.next,
                                       keyboardType: TextInputType.number,
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 20),

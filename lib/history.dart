@@ -20,14 +20,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Are you sure you want to delete this entry?'),
-          content: Text('This action cannot be undone.'),
+          backgroundColor: Colors.blue.shade900,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          title: Text(
+            'Are you sure you want to delete this entry?',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(""),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // User pressed No
               },
-              child: Text('No'),
+              child: Text(
+                'No',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             TextButton(
               onPressed: () async {
@@ -38,7 +47,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Navigator.of(context).pop(); // Close dialog after confirming
                 setState(() {});
               },
-              child: Text('Yes'),
+              child: Text(
+                'Yes',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
