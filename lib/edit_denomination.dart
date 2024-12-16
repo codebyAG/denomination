@@ -1,10 +1,10 @@
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
+import 'package:denomination/Services/NavigationHelper.dart';
 import 'package:denomination/history.dart';
 import 'package:denomination/homepage.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:num_to_words/num_to_words.dart';
 
 class EditDenominationScreen extends StatefulWidget {
@@ -177,7 +177,7 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
                   DatabaseHelper.instance.updateDenominationEntry(updatedEntry);
 
                   Navigator.pop(context); // Close dialog
-                  Get.offAll(() => HomePage());
+                  NavigationHelper.offAll(context, HomePage());
                 }
               },
               child: Text('Update'),
@@ -238,7 +238,7 @@ class _EditDenominationScreenState extends State<EditDenominationScreen> {
               PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == 'history') {
-                    Get.to(HistoryScreen());
+                    NavigationHelper.to(context, HistoryScreen());
                   }
                 },
                 itemBuilder: (BuildContext context) {

@@ -2,10 +2,10 @@ import 'dart:developer';
 
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
+import 'package:denomination/Services/NavigationHelper.dart';
 import 'package:denomination/edit_denomination.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:get/get.dart';
 import 'package:num_to_words/num_to_words.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -102,7 +102,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             log(entry.denominations.first.entryId.toString());
                             log(snapshot.data!.first.denominations.first.entryId
                                 .toString());
-                            Get.to(EditDenominationScreen(entryToEdit: entry));
+                            NavigationHelper.to(context,
+                                EditDenominationScreen(entryToEdit: entry));
                             // Implement edit functionality here
                           },
                         ),

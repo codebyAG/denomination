@@ -1,9 +1,9 @@
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
 import 'package:denomination/Services/Databasehelper.dart';
+import 'package:denomination/Services/NavigationHelper.dart';
 import 'package:denomination/history.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:num_to_words/num_to_words.dart';
 
@@ -245,7 +245,7 @@ class _HomePageState extends State<HomePage> {
               PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == 'history') {
-                    Get.to(
+                    NavigationHelper.to(context,
                         HistoryScreen()); // Navigate to HistoryScreen when History is selected
                   }
                 },
