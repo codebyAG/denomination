@@ -1,7 +1,15 @@
+import 'package:denomination/controllers/usercontroller.dart';
 import 'package:denomination/homepage.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(MultiProvider(providers: [
+      ChangeNotifierProvider(
+        create: (context) => UserProfile(),
+        child: MyApp(),
+      ),
+      
+    ], child: MyApp()));
 
 class MyApp extends StatelessWidget {
   @override

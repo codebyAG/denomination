@@ -1,10 +1,13 @@
 import 'dart:developer';
 import 'package:denomination/Models/dinomation_entry_model.dart';
 import 'package:denomination/Models/dinomination_model.dart';
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-class DatabaseHelper {
+class DatabaseHelper extends ChangeNotifier {
+
+
   static const _databaseName = 'mydinomination.db'; // Database name
   static const _databaseVersion = 1;
 
